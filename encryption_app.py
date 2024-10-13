@@ -3,7 +3,6 @@ from tkinter import ttk, scrolledtext
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 import base64
-import string
 
 # Caesar Cipher Functions
 def caesar_encrypt(text, shift=3):
@@ -71,22 +70,35 @@ def row_transposition_encrypt(text, key):
     key_len = len(key)
     text_len = len(text)
     padding = key_len - (text_len % key_len)
-    text = text + padding * '_'
+    if padding < key_len:
+        text += '_' * padding
     grid = [text[i:i + key_len] for i in range(0, len(text), key_len)]
-    cipher = ''.join([''.join(row[i] for row in grid) for i in sorted(range(key_len), key=lambda k: key[k])])
+    
+    # Create a sorted order for the columns based on the key
+    order = sorted(range(key_len), key=lambda x: key[x])
+    
+    # Read columns in the order specified by the key
+    cipher = ''.join(''.join(row[i] for row in grid) for i in order)
     return cipher
 
 def row_transposition_decrypt(cipher, key):
     key_len = len(key)
     num_rows = len(cipher) // key_len
     grid = [[''] * key_len for _ in range(num_rows)]
+    
+    # Create a sorted order for the columns based on the key
+    order = sorted(range(key_len), key=lambda x: key[x])
+    
     col_index = 0
-    for col in sorted(range(key_len), key=lambda k: key[k]):
+    # Fill grid based on the original column order
+    for col in order:
         for row in range(num_rows):
             grid[row][col] = cipher[col_index]
             col_index += 1
-    plain_text = ''.join([''.join(row) for row in grid])
-    return plain_text.replace('_', '')
+            
+    # Read the grid row-wise to get the decrypted text
+    plain_text = ''.join(''.join(row) for row in grid)
+    return plain_text.replace('_', '')  # Remove padding
 
 # AES Encryption/Decryption Functions
 def pad(text):
@@ -122,41 +134,55 @@ def rsa_decrypt(ciphertext, private_key):
 # GUI Setup
 def encrypt_text():
     method = algorithm_choice.get()
-    text = input_text.get("1.0", 'end-1c')
-    key = key_input.get()
+    text = input_text.get("1.0", 'end-1c').strip()
+    key = key_input.get().strip()
     
-    if method == 'Caesar Cipher':
-        output = caesar_encrypt(text, int(key))
-    elif method == 'Rail Fence Cipher':
-        output = rail_fence_encrypt(text, int(key))
-    elif method == 'Row Transposition Cipher':
-        output = row_transposition_encrypt(text, list(map(int, key)))
-    elif method == 'AES':
-        output = aes_encrypt(text, key)
-    elif method == 'RSA':
-        output = rsa_encrypt(text, rsa_public_key)
+    try:
+        if method == 'Caesar Cipher':
+            output = caesar_encrypt(text, int(key))
+        elif method == 'Rail Fence Cipher':
+            output = rail_fence_encrypt(text, int(key))
+        elif method == 'Row Transposition Cipher':
+            output = row_transposition_encrypt(text, list(map(int, key.split(','))))
+        elif method == 'AES':
+            output = aes_encrypt(text, key)
+        elif method == 'RSA':
+            output = rsa_encrypt(text, rsa_public_key)
+        else:
+            raise ValueError("Select a valid encryption method.")
+        
+        output_text.delete("1.0", tk.END)
+        output_text.insert(tk.END, output)
     
-    output_text.delete("1.0", tk.END)
-    output_text.insert(tk.END, output)
+    except Exception as e:
+        output_text.delete("1.0", tk.END)
+        output_text.insert(tk.END, f"Error: {str(e)}")
 
 def decrypt_text():
     method = algorithm_choice.get()
-    text = input_text.get("1.0", 'end-1c')
-    key = key_input.get()
+    text = input_text.get("1.0", 'end-1c').strip()
+    key = key_input.get().strip()
     
-    if method == 'Caesar Cipher':
-        output = caesar_decrypt(text, int(key))
-    elif method == 'Rail Fence Cipher':
-        output = rail_fence_decrypt(text, int(key))
-    elif method == 'Row Transposition Cipher':
-        output = row_transposition_decrypt(text, list(map(int, key)))
-    elif method == 'AES':
-        output = aes_decrypt(text, key)
-    elif method == 'RSA':
-        output = rsa_decrypt(text, rsa_private_key)
+    try:
+        if method == 'Caesar Cipher':
+            output = caesar_decrypt(text, int(key))
+        elif method == 'Rail Fence Cipher':
+            output = rail_fence_decrypt(text, int(key))
+        elif method == 'Row Transposition Cipher':
+            output = row_transposition_decrypt(text, list(map(int, key.split(','))))
+        elif method == 'AES':
+            output = aes_decrypt(text, key)
+        elif method == 'RSA':
+            output = rsa_decrypt(text, rsa_private_key)
+        else:
+            raise ValueError("Select a valid decryption method.")
+        
+        output_text.delete("1.0", tk.END)
+        output_text.insert(tk.END, output)
     
-    output_text.delete("1.0", tk.END)
-    output_text.insert(tk.END, output)
+    except Exception as e:
+        output_text.delete("1.0", tk.END)
+        output_text.insert(tk.END, f"Error: {str(e)}")
 
 # RSA Key Generation
 rsa_private_key, rsa_public_key = generate_rsa_keys()
@@ -172,7 +198,7 @@ input_text = scrolledtext.ScrolledText(window, height=5)
 input_text.pack()
 
 # Key input field
-key_label = tk.Label(window, text="Enter Key (if required):")
+key_label = tk.Label(window, text="Enter Key (if required, comma-separated for Row Transposition):")
 key_label.pack()
 key_input = tk.Entry(window)
 key_input.pack()
