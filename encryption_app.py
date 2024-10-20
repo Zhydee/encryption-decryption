@@ -110,36 +110,36 @@ def aes_decrypt(ciphertext, key):
 
 # Vigenère Cipher Functions
 def vigenere_encrypt(text, key):
-    key = key.lower()
-    result = []
-    key_index = 0
-    for char in text:
-        if char.isalpha():
-            shift = ord(key[key_index % len(key)]) - ord('a')
-            if char.isupper():
-                result.append(chr((ord(char) + shift - 65) % 26 + 65))
-            else:
-                result.append(chr((ord(char) + shift - 97) % 26 + 97))
-            key_index += 1
+    text = text.upper()  # Ensure both text and key are uppercase
+    key = key.upper()
+    encrypted = []
+    key_length = len(key)
+    
+    for i in range(len(text)):
+        if text[i].isalpha():  # Only encrypt alphabetic characters
+            shift = ord(key[i % key_length]) - ord('A')
+            encrypted_char = chr((ord(text[i]) - ord('A') + shift) % 26 + ord('A'))
+            encrypted.append(encrypted_char)
         else:
-            result.append(char)
-    return ''.join(result)
+            encrypted.append(text[i])  # Keep non-alphabetic characters as is
+    
+    return ''.join(encrypted)
 
 def vigenere_decrypt(ciphertext, key):
-    key = key.lower()
-    result = []
-    key_index = 0
-    for char in ciphertext:
-        if char.isalpha():
-            shift = ord(key[key_index % len(key)]) - ord('a')
-            if char is upper():
-                result.append(chr((ord(char) - shift - 65) % 26 + 65))
-            else:
-                result.append(chr((ord(char) - shift - 97) % 26 + 97))
-            key_index += 1
+    ciphertext = ciphertext.upper()  # Ensure both text and key are uppercase
+    key = key.upper()
+    decrypted = []
+    key_length = len(key)
+    
+    for i in range(len(ciphertext)):
+        if ciphertext[i].isalpha():  # Only decrypt alphabetic characters
+            shift = ord(key[i % key_length]) - ord('A')
+            decrypted_char = chr((ord(ciphertext[i]) - ord('A') - shift + 26) % 26 + ord('A'))
+            decrypted.append(decrypted_char)
         else:
-            result.append(char)
-    return ''.join(result)
+            decrypted.append(ciphertext[i])  # Keep non-alphabetic characters as is
+    
+    return ''.join(decrypted)
 
 # GUI Setup with Vigenère Cipher
 def encrypt_text():
