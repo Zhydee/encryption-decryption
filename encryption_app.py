@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
+from Crypto.Cipher import AES
 import base64
 
 # Caesar Cipher Functions
@@ -72,10 +73,8 @@ def row_transposition_encrypt(text, key):
         text += '_' * padding
     grid = [text[i:i + key_len] for i in range(0, len(text), key_len)]
     
-    # Create a sorted order for the columns based on the key
     order = sorted(range(key_len), key=lambda x: key[x])
     
-    # Read columns in the order specified by the key
     cipher = ''.join(''.join(row[i] for row in grid) for i in order)
     return cipher
 
@@ -84,17 +83,14 @@ def row_transposition_decrypt(cipher, key):
     num_rows = len(cipher) // key_len
     grid = [[''] * key_len for _ in range(num_rows)]
     
-    # Create a sorted order for the columns based on the key
     order = sorted(range(key_len), key=lambda x: key[x])
     
     col_index = 0
-    # Fill grid based on the original column order
     for col in order:
         for row in range(num_rows):
             grid[row][col] = cipher[col_index]
             col_index += 1
             
-    # Read the grid row-wise to get the decrypted text
     plain_text = ''.join(''.join(row) for row in grid)
     return plain_text.replace('_', '')  # Remove padding
 
@@ -114,38 +110,38 @@ def aes_decrypt(ciphertext, key):
 
 # Vigenère Cipher Functions
 def vigenere_encrypt(text, key):
-    key = key.upper()
-    encrypted = []
+    key = key.lower()
+    result = []
     key_index = 0
-    for i, char in enumerate(text):
+    for char in text:
         if char.isalpha():
-            shift = ord(key[key_index % len(key)]) - 65
+            shift = ord(key[key_index % len(key)]) - ord('a')
             if char.isupper():
-                encrypted.append(chr((ord(char) + shift - 65) % 26 + 65))
-            elif char.islower():
-                encrypted.append(chr((ord(char) + shift - 97) % 26 + 97))
+                result.append(chr((ord(char) + shift - 65) % 26 + 65))
+            else:
+                result.append(chr((ord(char) + shift - 97) % 26 + 97))
             key_index += 1
         else:
-            encrypted.append(char)
-    return ''.join(encrypted)
+            result.append(char)
+    return ''.join(result)
 
 def vigenere_decrypt(ciphertext, key):
-    key = key.upper()
-    decrypted = []
+    key = key.lower()
+    result = []
     key_index = 0
-    for i, char in enumerate(ciphertext):
+    for char in ciphertext:
         if char.isalpha():
-            shift = ord(key[key_index % len(key)]) - 65
-            if char.isupper():
-                decrypted.append(chr((ord(char) - shift - 65) % 26 + 65))
-            elif char.islower():
-                decrypted.append(chr((ord(char) - shift - 97) % 26 + 97))
+            shift = ord(key[key_index % len(key)]) - ord('a')
+            if char is upper():
+                result.append(chr((ord(char) - shift - 65) % 26 + 65))
+            else:
+                result.append(chr((ord(char) - shift - 97) % 26 + 97))
             key_index += 1
         else:
-            decrypted.append(char)
-    return ''.join(decrypted)
+            result.append(char)
+    return ''.join(result)
 
-# GUI Setup
+# GUI Setup with Vigenère Cipher
 def encrypt_text():
     method = algorithm_choice.get()
     text = input_text.get("1.0", 'end-1c').strip()
@@ -198,38 +194,63 @@ def decrypt_text():
         output_text.delete("1.0", tk.END)
         output_text.insert(tk.END, f"Error: {str(e)}")
 
-# GUI Layout
+# GUI Styling
 window = tk.Tk()
 window.title("Encryption-Decryption App")
+window.geometry("600x400")
+window.configure(bg="#f0f0f0")
+
+# Fonts and Style
+header_font = ("Helvetica", 14, "bold")
+label_font = ("Helvetica", 11)
+button_font = ("Helvetica", 10, "bold")
 
 # Input text area
-input_label = tk.Label(window, text="Enter text:")
-input_label.pack()
-input_text = scrolledtext.ScrolledText(window, height=5)
-input_text.pack()
+input_frame = ttk.Frame(window, padding="10")
+input_frame.pack(fill='x')
+
+input_label = tk.Label(input_frame, text="Enter text:", font=label_font)
+input_label.pack(anchor='w')
+input_text = scrolledtext.ScrolledText(input_frame, height=5, font=("Helvetica", 10))
+input_text.pack(fill='x')
 
 # Key input field
-key_label = tk.Label(window, text="Enter Key (if required, comma-separated for Row Transposition):")
-key_label.pack()
-key_input = tk.Entry(window)
-key_input.pack()
+key_frame = ttk.Frame(window, padding="10")
+key_frame.pack(fill='x')
+
+key_label = tk.Label(key_frame, text="Enter Key (if required, comma-separated for Row Transposition):", font=label_font)
+key_label.pack(anchor='w')
+key_input = tk.Entry(key_frame, font=("Helvetica", 10))
+key_input.pack(fill='x')
 
 # Dropdown for algorithm choice
-algorithm_label = tk.Label(window, text="Select Algorithm:")
-algorithm_label.pack()
-algorithm_choice = ttk.Combobox(window, values=["Caesar Cipher", "Rail Fence Cipher", "Row Transposition Cipher", "AES", "Vigenère Cipher"])
-algorithm_choice.pack()
+algorithm_frame = ttk.Frame(window, padding="10")
+algorithm_frame.pack(fill='x')
+
+algorithm_label = tk.Label(algorithm_frame, text="Select Algorithm:", font=label_font)
+algorithm_label.pack(anchor='w')
+algorithm_choice = ttk.Combobox(algorithm_frame, values=["Caesar Cipher", "Rail Fence Cipher", "Row Transposition Cipher", "AES", "Vigenère Cipher"], font=("Helvetica", 10))
+algorithm_choice.pack(fill='x')
 
 # Encrypt and Decrypt buttons
-encrypt_button = tk.Button(window, text="Encrypt", command=encrypt_text)
-encrypt_button.pack()
-decrypt_button = tk.Button(window, text="Decrypt", command=decrypt_text)
-decrypt_button.pack()
+button_frame = ttk.Frame(window, padding="10")
+button_frame.pack(fill='x')
+
+encrypt_button = tk.Button(button_frame, text="Encrypt", command=encrypt_text, bg="#4CAF50", fg="white", font=button_font)
+encrypt_button.pack(side='left', padx=10, pady=10)
+
+decrypt_button = tk.Button(button_frame, text="Decrypt", command=decrypt_text, bg="#F44336", fg="white", font=button_font)
+decrypt_button.pack(side='left', padx=10, pady=10)
 
 # Output text area
-output_label = tk.Label(window, text="Output:")
-output_label.pack()
-output_text = scrolledtext.ScrolledText(window, height=5)
-output_text.pack()
+output_frame = ttk.Frame(window, padding="10")
+output_frame.pack(fill='x')
 
+output_label = tk.Label(output_frame, text="Output:", font=label_font)
+output_label.pack(anchor='w')
+output_text = scrolledtext.ScrolledText(output_frame, height=5, font=("Helvetica", 10))
+output_text.pack(fill='x')
+
+# Finalize and start the window loop
 window.mainloop()
+
