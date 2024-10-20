@@ -1,7 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, scrolledtext
-from Crypto.Cipher import AES, PKCS1_OAEP
-from Crypto.PublicKey import RSA
 import base64
 
 # Caesar Cipher Functions
@@ -114,22 +112,38 @@ def aes_decrypt(ciphertext, key):
     cipher = AES.new(pad(key).encode(), AES.MODE_ECB)
     return cipher.decrypt(base64.b64decode(ciphertext)).decode().strip()
 
-# RSA Encryption/Decryption Functions
-def generate_rsa_keys():
-    key = RSA.generate(2048)
-    private_key = key.export_key()
-    public_key = key.publickey().export_key()
-    return private_key, public_key
+# Vigenère Cipher Functions
+def vigenere_encrypt(text, key):
+    key = key.upper()
+    encrypted = []
+    key_index = 0
+    for i, char in enumerate(text):
+        if char.isalpha():
+            shift = ord(key[key_index % len(key)]) - 65
+            if char.isupper():
+                encrypted.append(chr((ord(char) + shift - 65) % 26 + 65))
+            elif char.islower():
+                encrypted.append(chr((ord(char) + shift - 97) % 26 + 97))
+            key_index += 1
+        else:
+            encrypted.append(char)
+    return ''.join(encrypted)
 
-def rsa_encrypt(text, public_key):
-    rsa_key = RSA.import_key(public_key)
-    cipher = PKCS1_OAEP.new(rsa_key)
-    return base64.b64encode(cipher.encrypt(text.encode())).decode()
-
-def rsa_decrypt(ciphertext, private_key):
-    rsa_key = RSA.import_key(private_key)
-    cipher = PKCS1_OAEP.new(rsa_key)
-    return cipher.decrypt(base64.b64decode(ciphertext)).decode()
+def vigenere_decrypt(ciphertext, key):
+    key = key.upper()
+    decrypted = []
+    key_index = 0
+    for i, char in enumerate(ciphertext):
+        if char.isalpha():
+            shift = ord(key[key_index % len(key)]) - 65
+            if char.isupper():
+                decrypted.append(chr((ord(char) - shift - 65) % 26 + 65))
+            elif char.islower():
+                decrypted.append(chr((ord(char) - shift - 97) % 26 + 97))
+            key_index += 1
+        else:
+            decrypted.append(char)
+    return ''.join(decrypted)
 
 # GUI Setup
 def encrypt_text():
@@ -146,8 +160,8 @@ def encrypt_text():
             output = row_transposition_encrypt(text, list(map(int, key.split(','))))
         elif method == 'AES':
             output = aes_encrypt(text, key)
-        elif method == 'RSA':
-            output = rsa_encrypt(text, rsa_public_key)
+        elif method == 'Vigenère Cipher':
+            output = vigenere_encrypt(text, key)
         else:
             raise ValueError("Select a valid encryption method.")
         
@@ -172,8 +186,8 @@ def decrypt_text():
             output = row_transposition_decrypt(text, list(map(int, key.split(','))))
         elif method == 'AES':
             output = aes_decrypt(text, key)
-        elif method == 'RSA':
-            output = rsa_decrypt(text, rsa_private_key)
+        elif method == 'Vigenère Cipher':
+            output = vigenere_decrypt(text, key)
         else:
             raise ValueError("Select a valid decryption method.")
         
@@ -183,9 +197,6 @@ def decrypt_text():
     except Exception as e:
         output_text.delete("1.0", tk.END)
         output_text.insert(tk.END, f"Error: {str(e)}")
-
-# RSA Key Generation
-rsa_private_key, rsa_public_key = generate_rsa_keys()
 
 # GUI Layout
 window = tk.Tk()
@@ -206,7 +217,7 @@ key_input.pack()
 # Dropdown for algorithm choice
 algorithm_label = tk.Label(window, text="Select Algorithm:")
 algorithm_label.pack()
-algorithm_choice = ttk.Combobox(window, values=["Caesar Cipher", "Rail Fence Cipher", "Row Transposition Cipher", "AES", "RSA"])
+algorithm_choice = ttk.Combobox(window, values=["Caesar Cipher", "Rail Fence Cipher", "Row Transposition Cipher", "AES", "Vigenère Cipher"])
 algorithm_choice.pack()
 
 # Encrypt and Decrypt buttons
